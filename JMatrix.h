@@ -18,15 +18,18 @@ public:
 	typedef T value_type;
 	inline T* operator[](const int i);
 	inline const T* operator[](const int i) const;
-	inline JMatrix<T> & operator*=(const T &a);
-	inline JMatrix<T> & operator/=(const T &a);
-	inline JMatrix<T> & operator+=(const T &a);
-	inline JMatrix<T> & operator-=(const T &a);
+	//TODO: move to a typedef of JMatrix<double>
+	//inline JMatrix<T> & operator*=(const T &a);
+	//inline JMatrix<T> & operator/=(const T &a);
+	//inline JMatrix<T> & operator+=(const T &a);
+	//inline JMatrix<T> & operator-=(const T &a);
 	inline int nrows() const;
 	inline int ncols() const;
 	void resize(int r,int c);
 	void assign(int r,int c,const T &a);
 	~JMatrix();
+
+	T* dataPointer();
 };
 
 /****************************************************************************************/
@@ -48,7 +51,7 @@ JMatrix<T>::JMatrix(int r, int c, const T &a): nr(r), nc(c), v(nr > 0 ? new T*[n
 	int i,j,nel = nr*nc;
 	if (v) v[0] = nel > 0 ? new T[nel] : NULL;
 	for (i = 1; i < nr; i++) v[i] = v[i-1] + nc;
-	for (i = 0; i < nr; i++) for (j = 0; j < nc; j++) v[i][j] = a;
+	for (i = 0; i < nr; i++) for (j = 0; j < nc; j++) memcpy(v[i][j],&a,sizeof(T));//v[i][j] = a;
 }
 
 template <class T>
@@ -56,7 +59,8 @@ JMatrix<T>::JMatrix(int r, int c, const T* a): nr(r), nc(c), v(nr > 0 ? new T*[n
 	int i,j,nel = nr*nc;
 	if (v) v[0] = nel > 0 ? new T[nel] : NULL;
 	for (i = 1; i < nr; i++) v[i] = v[i-1] + nc;
-	for (i = 0; i < nr; i++) for (j = 0; j < nc; j++) v[i][j] = *a++;
+	//for (i = 0; i < nr; i++) for (j = 0; j < nc; j++) v[i][j] = *a++;
+	if (v) memcpy(v[0],a,sizeof(T) * nel);
 }
 
 template <class T>
@@ -64,7 +68,8 @@ JMatrix<T>::JMatrix(const JMatrix<T> &a): nr(a.nr), nc(a.nc), v(nr > 0 ? new T*[
 	int i,j,nel = nr*nc;
 	if (v) v[0] = nel > 0 ? new T[nel] : NULL;
 	for (i = 1; i < nr; i++) v[i] = v[i-1] + nc;
-	for (i = 0; i < nr; i++) for (j = 0; j < nc; j++) v[i][j] = a[i][j];
+	//for (i = 0; i < nr; i++) for (j = 0; j < nc; j++) v[i][j] = a[i][j];
+	if (v) memcpy(v[0],a.v[0],sizeof(T) * nel);
 }
 
 template <class T>
@@ -73,17 +78,18 @@ JMatrix<T> & JMatrix<T>::operator=(const JMatrix &a) {
 		int i,j,nel;
 		if (nr != a.nr || nc != a.nc) {
 			if (v != NULL) {
-				delete[] v[0];
-				delete[] v;
+				delete[] (v[0]);
+				delete[] (v);
 			}
 			nr = a.nr;
 			nc = a.nc;
 			v = nr > 0 ? new T*[nr] : NULL;
 			nel = nr*nc;
 			if (v) v[0] = nel > 0 ? new T[nel] : NULL;
-			for (i = 0; i < nr; i++) v[i] = v[i-1] + nc;
+			for (i = 1; i < nr; i++) v[i] = v[i-1] + nc;
 		}
-		for (i = 0; i < nr; i++) for (j = 0; j < nc; j++) v[i][j] = a[i][j];
+		//for (i = 0; i < nr; i++) for (j = 0; j < nc; j++) v[i][j] = a[i][j];
+		if (v) memcpy(v[0],a.v[0],sizeof(T) * nel);
 	}
 	return *this;
 }
@@ -119,7 +125,7 @@ inline const T* JMatrix<T>::operator[](const int i) const {
 #endif
 	return v[i];
 }
-
+/*
 template <class T>
 inline JMatrix<T> & JMatrix<T>::operator*=(const T &a) {
 	int i,j;
@@ -187,7 +193,7 @@ template <class T>
 inline JMatrix<T> & operator-(const T &a, JMatrix<T> mat) {
 	return mat - a;
 }
-
+*/
 
 
 
@@ -235,7 +241,12 @@ void JMatrix<T>::assign(int r, int c, const T &a) {
 		if (v) v[0] = nel > 0 ? new T[nel] : NULL;
 		for (i = 1; i < nr; i++) v[i] = v[i-1] + nc;
 	}
-	for (i = 0; i < nr; i++) for (j = 0; j < nc; j++) v[i][j] = a;
+	for (i = 0; i < nr; i++) for (j = 0; j < nc; j++) memcpy(v[i][j],&a,sizeof(T));//v[i][j] = a;
+}
+
+template <class T>
+T* JMatrix<T>::dataPointer() {
+	return v[0];
 }
 
 

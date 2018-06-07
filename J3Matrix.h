@@ -18,16 +18,19 @@ public:
 	typedef T value_type;
 	inline T** operator[](const int i);
 	inline const T* const * operator[](const int i) const;
-	inline J3Matrix<T> & operator*=(const T &a);
-	inline J3Matrix<T> & operator/=(const T &a);
-	inline J3Matrix<T> & operator+=(const T &a);
-	inline J3Matrix<T> & operator-=(const T &a);
+	//TODO: move to a typedef of J3Matrix<double>
+	//inline J3Matrix<T> & operator*=(const T &a);
+	//inline J3Matrix<T> & operator/=(const T &a);
+	//inline J3Matrix<T> & operator+=(const T &a);
+	//inline J3Matrix<T> & operator-=(const T &a);
 	inline int dim1() const;
 	inline int dim2() const;
 	inline int dim3() const;
 	void resize(int n,int m,int k);
 	void assign(int n,int m,int k,const T &a);
 	~J3Matrix();
+
+	T* dataPointer();
 };
 /****************************************************************************************/
 //ctors, dtors, copy
@@ -65,7 +68,7 @@ J3Matrix<T>::J3Matrix(int n, int m, int k, const T &a): nn(n), mm(m), kk(k), v(n
 			for (j = 1; j < mm; j++) v[i][j] = v[i][j-1] + kk;
 		}
 	}
-	for (i = 0; i < nn; i++) for (j = 0; j < mm; j++) for (l = 0; l < kk; l++) v[i][j][l] = a;
+	for (i = 0; i < nn; i++) for (j = 0; j < mm; j++) for (l = 0; l < kk; l++) memcpy(v[i][j][l],&a,sizeof(T));//v[i][j][l] = a;
 }
 
 template <class T>
@@ -81,7 +84,8 @@ J3Matrix<T>::J3Matrix(const J3Matrix<T> &a): nn(a.nn), mm(a.mm), kk(a.kk), v(nn 
 			for (j = 1; j < mm; j++) v[i][j] = v[i][j-1] + kk;
 		}
 	}
-	for (i = 0; i < nn; i++) for (j = 0; j < mm; j++) for (l = 0; l < kk; l++) v[i][j][l] = a[i][j][l];
+	//for (i = 0; i < nn; i++) for (j = 0; j < mm; j++) for (l = 0; l < kk; l++) v[i][j][l] = a[i][j][l];
+	if (v[0][0]) memcpy(v[0][0],a.v[0][0],sizeof(T) * (nn*mm*kk));
 }
 
 template <class T>
@@ -97,7 +101,8 @@ J3Matrix<T>::J3Matrix(int n, int m, int k, const T *a): nn(n), mm(m), kk(k), v(n
 			for (j = 1; j < mm; j++) v[i][j] = v[i][j-1] + kk;
 		}
 	}
-	for (i = 0; i < nn; i++) for (j = 0; j < mm; j++) for (l = 0; l < kk; l++) v[i][j][l] = *a++;
+	//for (i = 0; i < nn; i++) for (j = 0; j < mm; j++) for (l = 0; l < kk; l++) v[i][j][l] = *a++;
+	if (v[0][0]) memcpy(v[0][0],a,sizeof(T) * (nn*mm*kk));
 }
 
 template <class T>
@@ -123,7 +128,8 @@ J3Matrix<T> & J3Matrix<T>::operator=(const J3Matrix &a) {
 				}
 			}
 		}
-		for (i = 0; i < nn; i++) for (j = 0; j < mm; j++) for (k = 0; k < kk; k++) v[i][j][k] = a[i][j][k];
+		//for (i = 0; i < nn; i++) for (j = 0; j < mm; j++) for (k = 0; k < kk; k++) v[i][j][k] = a[i][j][k];
+		if (v[0][0]) memcpy(v[0][0],a.v[0][0],sizeof(T) * (nn*mm*kk));
 	}
 	return *this;
 }
@@ -157,7 +163,7 @@ J3Matrix<T>::~J3Matrix() {
 
 /****************************************************************************************/
 //matrix related operator overloads
-
+/*
 template <class T>
 inline J3Matrix<T> & J3Matrix<T>::operator*=(const T &a) {
 	int i,j,k;
@@ -225,7 +231,7 @@ template <class T>
 inline J3Matrix<T> & operator-(const T &a, J3Matrix<T> m) {
 	return m - a;
 }
-
+*/
 
 
 
@@ -292,7 +298,12 @@ void J3Matrix<T>::assign(int n, int m, int k, const T &a) {
 			}
 		}
 	}
-	for (i=0;i<nn;i++) for (j=0;j<mm;j++) for(l=0;l<kk;l++) v[i][j][l] = a;
+	for (i=0;i<nn;i++) for (j=0;j<mm;j++) for(l=0;l<kk;l++) memcpy(v[i][j][l],&a,sizeof(T));//v[i][j][l] = a;
+}
+
+template <class T>
+T* J3Matrix<T>::dataPointer() {
+	return v[0][0];
 }
 
 
